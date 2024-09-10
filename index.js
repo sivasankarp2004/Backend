@@ -119,8 +119,8 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// POST Data API
-app.post('/post', authenticateToken, authorizeRoles(['student', 'admin']), async (req, res) => {
+// POST Data AP
+app.post('/post', async (req, res) => {
     const date = new Date();
     const options = {
         year: 'numeric',
@@ -218,6 +218,33 @@ function authorizeRoles(roles) {
 app.get('/api/admin', authenticateToken, authorizeRole('admin'), (req, res) => {
     res.json({ message: 'This is protected admin data' });
 });
+
+
+// // API to check if a student's name exists using URL params
+app.get('/api/check-name/:registerNo',authenticateToken, authorizeRoles(['student', 'admin']), async (req, res) => {
+    const { registerNo } = req.params;  // Get the name from the URL parameters
+    console.log(registerNo)
+    if (!registerNo) {
+        return res.status(400).json({ message: 'Name is required' });
+    }
+
+    try {
+        // Check if the student name exists in the database
+        const student = await model.findOne({registerNo});
+        console.log(student)
+        if (student) {
+            // If student exists, send a response indicating the name is taken
+            return res.status(200).json({ exists: true, message: 'Name already exists' });
+        } else {
+            // If student does not exist, send a response indicating the name is available
+            return res.status(200).json({ exists: false, message: 'Name is available' });
+        }
+    } catch (error) {
+        console.error('Error checking name:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 // Get All Documents API
 app.get('/get', authenticateToken, authorizeRoles(['staff', 'admin']), async (req, res) => {
